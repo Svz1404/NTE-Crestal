@@ -55,6 +55,21 @@ async function reportActivity(type) {
   console.log(chalk.gray(`📤 Reported ${type}: ${data.msg || JSON.stringify(data)}`));
 }
 
+async function getRandomMessage() {
+  const fileContent = await fs.readFile('NTE-Pesan.txt', 'utf8');
+  const messages = fileContent
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+
+  if (messages.length === 0) {
+    throw new Error("❌ NTE-Pesan.txt is empty or improperly formatted.");
+  }
+
+  const randomIndex = Math.floor(Math.random() * messages.length);
+  return messages[randomIndex];
+}
+
 async function sendMessage(message) {
   const trimmed = message.length > MAX_LENGTH ? message.slice(0, MAX_LENGTH) : message;
   const payload = {
@@ -82,9 +97,13 @@ async function startLoop(loopCount) {
   while (true) {
     console.log(chalk.blueBright(`\n🔄 Starting message loop: ${loopCount} time(s)`));
 
-    const spinner = ora('Reading message...').start();
-    const message = (await fs.readFile('NTE-Pesan.txt', 'utf8')).trim();
-    spinner.succeed(`Message loaded (${message.length} characters)`);
+    const spinner = ora('Loading random messages...').start();
+    const fileContent = await fs.readFile('NTE-Pesan.txt', 'utf8');
+    const allMessages = fileContent
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    spinner.succeed(`Loaded ${allMessages.length} messages.`);
 
     // Report activities
     const activityTypes = [
@@ -100,25 +119,27 @@ async function startLoop(loopCount) {
 
     // Message loop
     for (let i = 1; i <= loopCount; i++) {
-      console.log(chalk.magenta(`\n📩 [${i}/${loopCount}] Sending message...`));
+      const message = allMessages[Math.floor(Math.random() * allMessages.length)];
+      console.log(chalk.magenta(`\n📩 [${i}/${loopCount}] Sending message: "${message}"`));
       await sendMessage(message);
       await sleep(5000); // wait 5s between each post
     }
-  const userInfoRes = await fetch(`${BASE_URL}/users/${WALLET_ADDRESS}`, {
-    method: 'GET',
-    headers: headersGet,
-  });
-  const userData = await safeJson(userInfoRes);
 
-  const { rank_v1, rank, total_point, total_point_v1 } = userData;
+    const userInfoRes = await fetch(`${BASE_URL}/users/${WALLET_ADDRESS}`, {
+      method: 'GET',
+      headers: headersGet,
+    });
+    const userData = await safeJson(userInfoRes);
 
-  console.log('🏅 User Info:');
-  console.log(`- Rank V1: ${rank_v1}`);
-  console.log(`- Rank: ${rank}`);
-  console.log(`- Total Points: ${total_point}`);
-  console.log(`- Total Points V1: ${total_point_v1}`);
+    const { rank_v1, rank, total_point, total_point_v1 } = userData;
+
+    console.log('🏅 User Info:');
+    console.log(`- Rank V1: ${rank_v1}`);
+    console.log(`- Rank: ${rank}`);
+    console.log(`- Total Points: ${total_point}`);
+    console.log(`- Total Points V1: ${total_point_v1}`);
     console.log(chalk.bgGreen.black(`✅ Completed ${loopCount} messages. Waiting 24 hours to repeat...\n`));
-    await sleep(24 * 60 * 60 * 1000); // wait 24 hours
+    await sleep(24 * 60 * 60 * 0); // wait 24 hours
   }
 }
 
@@ -140,26 +161,27 @@ function askLoopCount() {
     });
   });
 }
+
 function centerText(text, color = "cyanBright") {
-    const terminalWidth = process.stdout.columns || 80;
-    const textLength = text.length;
-    const padding = Math.max(0, Math.floor((terminalWidth - textLength) / 2));
-    return " ".repeat(padding) + chalk[color](text);
-  }
+  const terminalWidth = process.stdout.columns || 80;
+  const textLength = text.length;
+  const padding = Math.max(0, Math.floor((terminalWidth - textLength) / 2));
+  return " ".repeat(padding) + chalk[color](text);
+}
 
 (async () => {
-    cfonts.say("NT Exhaust", {
-        font: "block",
-        align: "center",
-        colors: ["cyan", "magenta"],
-        background: "black",
-        letterSpacing: 1,
-        lineHeight: 1,
-        space: true,
-        maxLength: "0",
-      });
-      console.log(centerText("=== Telegram Channel 🚀 : NT Exhaust (@NTExhaust) ==="));
-      console.log(centerText("⌞👤 Mod : @NT_Exhaust⌝ \n"));
+  cfonts.say("NT Exhaust", {
+    font: "block",
+    align: "center",
+    colors: ["cyan", "magenta"],
+    background: "black",
+    letterSpacing: 1,
+    lineHeight: 1,
+    space: true,
+    maxLength: "0",
+  });
+  console.log(centerText("=== Telegram Channel 🚀 : NT Exhaust (@NTExhaust) ==="));
+  console.log(centerText("⌞👤 Mod : @NT_Exhaust⌝ \n"));
   const loopCount = await askLoopCount();
   await startLoop(loopCount);
 })();
