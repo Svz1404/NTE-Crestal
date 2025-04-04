@@ -139,7 +139,7 @@ async function startLoop(loopCount) {
     console.log(`- Total Points: ${total_point}`);
     console.log(`- Total Points V1: ${total_point_v1}`);
     console.log(chalk.bgGreen.black(`✅ Completed ${loopCount} messages. Waiting 24 hours to repeat...\n`));
-    await sleep(24 * 60 * 60 * 0); // wait 24 hours
+    await sleep(24 * 60 * 60 * 1000); // wait 24 hours
   }
 }
 
